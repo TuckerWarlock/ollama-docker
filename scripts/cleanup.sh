@@ -41,7 +41,7 @@ stop_project_containers() {
     log_info "Stopping project containers..."
     
     for pattern in "${PROJECT_PATTERNS[@]}"; do
-        containers=$(docker ps -a --format "table {{.Names}}" | grep -E "(${pattern}|ollama|python-app|webui)" 2>/dev/null || true)
+        containers=$(docker ps -a --format "table {{.Names}}" | grep -E "(${pattern}|ollama|webui)" 2>/dev/null || true)
         if [[ -n "$containers" ]]; then
             echo "$containers" | while read container; do
                 if [[ "$container" != "NAMES" ]]; then

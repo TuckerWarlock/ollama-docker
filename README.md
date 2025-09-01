@@ -99,7 +99,7 @@ make test-gpu
 ## Project Structure
 
 ```
-ollama-python-project/
+ollama-docker/
 ├── README.md              # This file
 ├── Makefile               # Simple command interface
 ├── docker-compose.yml     # Docker services (NVIDIA/CPU)

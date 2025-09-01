@@ -121,18 +121,6 @@ make chat
 # You: quit
 ```
 
-### Quick One-Off Questions
-
-Instead of interactive mode, you can also use the API directly:
-
-```bash
-# Test a quick prompt
-docker compose exec python-app uv run -c "
-from main import chat_with_ollama
-print(chat_with_ollama('What is the capital of France?'))
-"
-```
-
 ## Web Interface Usage
 
 ### Accessing the Web UI
@@ -177,34 +165,6 @@ make chat
 # Ask simple questions...
 ```
 
-### Automation and Scripting
-
-You can integrate the AI into scripts:
-
-```bash
-#!/bin/bash
-# Script to get AI help with error messages
-
-ERROR_LOG=$1
-if [ -z "$ERROR_LOG" ]; then
-    echo "Usage: $0 <error_log_file>"
-    exit 1
-fi
-
-# Make sure services are running
-make start
-
-# Get AI analysis of the error
-docker compose exec python-app uv run -c "
-from main import chat_with_ollama
-import sys
-with open('$ERROR_LOG', 'r') as f:
-    error_text = f.read()
-response = chat_with_ollama(f'Analyze this error and suggest a fix: {error_text}')
-print(response)
-"
-```
-
 ### Configuration Customization
 
 Edit the `.env` file to change defaults:
@@ -219,7 +179,6 @@ nano .env
 # Example customizations:
 OLLAMA_MODEL=llama3.2:11b          # Change default model
 OLLAMA_HOST=http://ollama:11434    # API endpoint
-PYTHON_ENV=production              # Environment mode
 ```
 
 ## Common Use Cases

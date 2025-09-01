@@ -47,29 +47,28 @@ check_nvidia() {
 
 # Setup function
 setup() {
-    log_info "Setting up Ollama Project..."
+    log_info "Setting up Ollama Docker Project..."
     
     check_docker
     
-    # Build and start services
-    log_info "Building and starting services..."
-    docker compose up -d --build
+    # Start services
+    log_info "Starting services..."
+    docker compose up -d
     
     # Wait for Ollama to be ready
     log_info "Waiting for Ollama to be ready..."
     sleep 10
     
-    # Pull the model
-    log_info "Pulling Llama 3.2 3B model..."
-    docker compose exec ollama ollama pull llama3.2:3b
+    # Pull the default model
+    log_info "Pulling default model (${OLLAMA_MODEL:-llama3.2:1b})..."
+    docker compose exec ollama ollama pull ${OLLAMA_MODEL:-llama3.2:1b}
     
     log_success "Setup complete!"
     log_info "Services running:"
     log_info "  - Ollama API: http://localhost:11434"
     log_info "  - Web UI: http://localhost:3000"
     log_info ""
-    log_info "To interact with your app:"
-    log_info "  docker-compose exec python-app main.py"
+    log_info "Open your browser to http://localhost:3000 to start chatting!"
 }
 
 # Start function
@@ -96,24 +95,19 @@ status() {
     docker compose ps
 }
 
-# Interactive app
-interactive() {
-    log_info "Starting interactive app..."
-    docker compose exec python-app uv run main.py
-}
-
 # Help function
 help() {
-    echo "Usage: $0 {setup|start|stop|logs|status|interactive|help}"
+    echo "Usage: $0 {setup|start|stop|logs|status|help}"
     echo ""
     echo "Commands:"
-    echo "  setup       - Initial setup (build, start, pull model)"
+    echo "  setup       - Initial setup (start services, pull default model)"
     echo "  start       - Start all services"
     echo "  stop        - Stop all services"
     echo "  logs        - Show logs from all services"
     echo "  status      - Show service status"
-    echo "  interactive - Run interactive app"
     echo "  help        - Show this help message"
+    echo ""
+    echo "After setup, visit http://localhost:3000 for the web interface"
 }
 
 # Main script
@@ -132,9 +126,6 @@ case "${1:-}" in
         ;;
     status)
         status
-        ;;
-    interactive)
-        interactive
         ;;
     help|--help|-h)
         help

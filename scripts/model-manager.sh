@@ -31,7 +31,7 @@ MODELS[mistral:7b]="Alternative option (7B params, ~4GB VRAM)"
 
 # Current model from .env
 get_current_model() {
-    grep "^OLLAMA_MODEL=" .env 2>/dev/null | cut -d'=' -f2 || echo "llama3.2:3b"
+    grep "^OLLAMA_MODEL=" .env 2>/dev/null | cut -d'=' -f2 || echo "llama3.2:1b"
 }
 
 # Update .env file with new model
@@ -69,7 +69,7 @@ pull_model() {
     log_success "Model $model downloaded"
 }
 
-# Switch to a model (pull if needed, update .env, restart)
+# Switch to a model (pull if needed, update .env)
 switch_model() {
     local model=$1
     
@@ -88,12 +88,8 @@ switch_model() {
     # Update .env file
     set_model "$model"
     
-    # Restart app to pick up new env
-    log_info "Restarting app with new model..."
-    docker compose restart python-app
-    
     log_success "Successfully switched to $model"
-    echo "Test it with: docker compose exec python-app uv run main.py"
+    log_info "Model is now available in the web UI at http://localhost:3000"
 }
 
 # Show current status

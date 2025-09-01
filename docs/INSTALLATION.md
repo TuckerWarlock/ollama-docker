@@ -96,8 +96,8 @@ GPU support is automatically handled by Docker Desktop if you have compatible ha
 
 #### Option B: Git Clone (if you have Git)
 ```bash
-git clone <your-repo-url>
-cd ollama-python-project
+git clone https://github.com/TuckerWarlock/ollama-docker
+cd ollama-docker
 ```
 
 ### 4. Verify Installation
@@ -273,7 +273,7 @@ make reset
 
 # Remove project directory
 cd ..
-rm -rf ollama-python-project
+rm -rf ollama-docker
 ```
 
 ## Getting Help
