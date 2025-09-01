@@ -1,0 +1,63 @@
+services:
+  # Ollama service with AMD GPU (ROCm) support
+  ollama:
+    image: ollama/ollama:rocm
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    environment:
+      - ROC_ENABLE_PRE_VEGA=1
+      - HIP_VISIBLE_DEVICES=all
+      - ROCR_VISIBLE_DEVICES=all
+    group_add:
+      - video
+      - render
+    security_opt:
+      - seccomp:unconfined
+    devices:
+      - /dev/kfd
+      - /dev/dri
+
+  # Python application  
+  python-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollama-python-app
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
+
+  # Optional: Web interface for Ollama (Open WebUI)
+  ollama-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ollama-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_AUTH=false
+    depends_on:
+      - ollama
+    volumes:
+      - ollama_webui_data:/app/backend/data
+
+volumes:
+  ollama_data:
+    driver: local
+  ollama_webui_data:
+    driver: local
