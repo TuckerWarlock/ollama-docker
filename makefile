@@ -121,6 +121,9 @@ web: ## Show web UI URL
 clean: ## Clean up project containers and volumes
 	@echo -e "$(BLUE)Cleaning up project...$(RESET)"
 	@bash scripts/cleanup.sh quick
+	@echo -e "$(BLUE)Removing unused networks...$(RESET)"
+	@docker network prune -f
+	@echo -e "$(GREEN)Cleanup complete$(RESET)"
 
 reset: ## Full reset with confirmation  
 	@echo -e "$(YELLOW)This will completely reset your project!$(RESET)"
