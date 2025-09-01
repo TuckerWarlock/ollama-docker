@@ -1,4 +1,4 @@
-# Ollama Python Project
+# Ollama Project
 
 A Docker-based setup for running large language models locally using Ollama, with both command-line and web interfaces.
 
@@ -104,10 +104,10 @@ ollama-python-project/
 ├── Makefile               # Simple command interface
 ├── docker-compose.yml     # Docker services (NVIDIA/CPU)
 ├── docker-compose-amd.yml # Docker services (AMD GPU)
-├── Dockerfile             # Python app container
-├── main.py                # Python chat application
+├── Dockerfile             # app container
+├── main.py                # chat application
 ├── .env                   # Configuration file
-├── pyproject.toml         # Python dependencies
+├── pyproject.toml         # dependencies
 ├── uv.lock                # Dependency lock file
 ├── docs/
 │   ├── INSTALLATION.md    # Detailed setup instructions
@@ -124,7 +124,7 @@ ollama-python-project/
 
 ### Command Line Interface
 - Interactive chat in terminal
-- Direct Python API access
+- Direct API access
 - Scriptable and automatable
 
 ### Web Interface

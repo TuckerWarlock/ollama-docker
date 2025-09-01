@@ -1,5 +1,5 @@
 services:
-  # Ollama service with simple GPU support (no health check)
+  # Ollama service with GPU support
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -13,25 +13,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     runtime: nvidia
 
-  # Python application
-  python-app:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    container_name: ollama-python-app
-    restart: unless-stopped
-    depends_on:
-      - ollama
-    env_file:
-      - .env
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-    volumes:
-      - .:/app
-    stdin_open: true
-    tty: true
-
-  # Optional: Web interface for Ollama (Open WebUI)
+  # Web interface for Ollama (Open WebUI)
   ollama-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: ollama-webui

@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide covers everything you need to know about using the Ollama Python Project effectively.
+This guide covers everything you need to know about using the Ollama Project effectively.
 
 ## Quick Reference
 
@@ -96,7 +96,7 @@ make chat
 ```bash
 make code
 make chat
-# Ask: "Write a Python function to sort a list"
+# Ask: "Write a function to sort a list"
 ```
 
 **For Complex Analysis:**
@@ -115,7 +115,7 @@ make chat
 # You: Hello, what can you help me with?
 # Ollama: I can help with questions, writing, coding, analysis...
 
-# You: Write a Python function to calculate fibonacci numbers
+# You: Write a function to calculate fibonacci numbers
 # Ollama: [Provides code example]
 
 # You: quit
@@ -127,7 +127,7 @@ Instead of interactive mode, you can also use the API directly:
 
 ```bash
 # Test a quick prompt
-docker compose exec python-app uv run python -c "
+docker compose exec python-app uv run -c "
 from main import chat_with_ollama
 print(chat_with_ollama('What is the capital of France?'))
 "
@@ -195,7 +195,7 @@ fi
 make start
 
 # Get AI analysis of the error
-docker compose exec python-app uv run python -c "
+docker compose exec python-app uv run -c "
 from main import chat_with_ollama
 import sys
 with open('$ERROR_LOG', 'r') as f:
@@ -231,7 +231,7 @@ make code
 make chat
 ```
 Then ask:
-- "Review this Python function for bugs: [paste code]"
+- "Review this function for bugs: [paste code]"
 - "Explain what this SQL query does: [paste SQL]"
 - "How can I optimize this algorithm?"
 
@@ -264,7 +264,7 @@ make fast
 make chat
 ```
 Then ask:
-- "What's the syntax for a Python list comprehension?"
+- "What's the syntax for a list comprehension?"
 - "Convert 100 fahrenheit to celsius"
 - "What's the population of Tokyo?"
 
@@ -382,7 +382,7 @@ sudo lsof -i :3000
 ### 3. Conversation Tips
 
 **Good prompts:**
-- Be specific: "Write a Python function that takes a list and returns unique items"
+- Be specific: "Write a function that takes a list and returns unique items"
 - Provide context: "I'm building a web app and need to..."
 - Ask for explanations: "Explain how this code works step by step"
 

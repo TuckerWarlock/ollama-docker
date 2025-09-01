@@ -1,6 +1,6 @@
 # AMD GPU Support
 
-This document covers AMD GPU support for the Ollama Python Project using ROCm.
+This document covers AMD GPU support for the Ollama Project using ROCm.
 
 ## Current Status
 

@@ -47,7 +47,7 @@ check_nvidia() {
 
 # Setup function
 setup() {
-    log_info "Setting up Ollama Python Project..."
+    log_info "Setting up Ollama Project..."
     
     check_docker
     
@@ -68,8 +68,8 @@ setup() {
     log_info "  - Ollama API: http://localhost:11434"
     log_info "  - Web UI: http://localhost:3000"
     log_info ""
-    log_info "To interact with your Python app:"
-    log_info "  docker-compose exec python-app python main.py"
+    log_info "To interact with your app:"
+    log_info "  docker-compose exec python-app main.py"
 }
 
 # Start function
@@ -96,10 +96,10 @@ status() {
     docker compose ps
 }
 
-# Interactive Python app
+# Interactive app
 interactive() {
-    log_info "Starting interactive Python app..."
-    docker compose exec python-app uv run python main.py
+    log_info "Starting interactive app..."
+    docker compose exec python-app uv run main.py
 }
 
 # Help function
@@ -112,7 +112,7 @@ help() {
     echo "  stop        - Stop all services"
     echo "  logs        - Show logs from all services"
     echo "  status      - Show service status"
-    echo "  interactive - Run interactive Python app"
+    echo "  interactive - Run interactive app"
     echo "  help        - Show this help message"
 }
 

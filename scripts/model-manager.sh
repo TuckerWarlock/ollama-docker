@@ -88,12 +88,12 @@ switch_model() {
     # Update .env file
     set_model "$model"
     
-    # Restart python app to pick up new env
-    log_info "Restarting Python app with new model..."
+    # Restart app to pick up new env
+    log_info "Restarting app with new model..."
     docker compose restart python-app
     
     log_success "Successfully switched to $model"
-    echo "Test it with: docker compose exec python-app uv run python main.py"
+    echo "Test it with: docker compose exec python-app uv run main.py"
 }
 
 # Show current status

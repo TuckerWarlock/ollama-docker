@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide will help you set up the Ollama Python Project on your system.
+This guide will help you set up the Ollama Project on your system.
 
 ## System Requirements
 
@@ -134,7 +134,7 @@ make first-time
 
 This will:
 - Make all scripts executable
-- Build the Python container
+- Build the container
 - Start all services
 - Download the default model (llama3.2:3b)
 

@@ -1,4 +1,4 @@
-# Ollama Python Project Makefile
+# Ollama Project Makefile
 # Usage: make <command> [arguments]
 
 .PHONY: help setup start stop restart status logs chat clean reset
@@ -20,7 +20,7 @@ ARGS := $(filter-out $@,$(MAKECMDGOALS))
 	@:
 
 help: ## Show this help message
-	@echo -e "$(BLUE)Ollama Python Project$(RESET)"
+	@echo -e "$(BLUE)Ollama Project$(RESET)"
 	@echo "======================"
 	@echo -e "$(GREEN)GPU Configuration:$(RESET)"
 	@echo -e "  $(YELLOW)make setup-nvidia$(RESET)   - Configure for NVIDIA GPU (default)"
@@ -42,8 +42,7 @@ help: ## Show this help message
 	@echo ""
 	@echo -e "$(GREEN)Usage:$(RESET)"
 	@echo -e "$(GREEN)Usage:$(RESET)"
-	@echo -e "  $(YELLOW)make chat$(RESET)           - Start interactive chat"
-	@echo -e "  $(YELLOW)make web$(RESET)            - Open web UI (shows URL)"
+	@echo -e "  $(YELLOW)make web$(RESET)            - Open web UI (http://localhost:3000)"
 	@echo ""
 	@echo -e "$(GREEN)Model Shortcuts:$(RESET)"
 	@echo -e "  $(YELLOW)make cpu$(RESET)            - CPU-optimized model (llama3.2:1b - default)"
@@ -62,7 +61,7 @@ help: ## Show this help message
 
 # Setup & Control Commands
 setup: ## Initial setup and start
-	@echo -e "$(BLUE)Setting up Ollama Python Project...$(RESET)"
+	@echo -e "$(BLUE)Setting up Ollama Project...$(RESET)"
 	@bash scripts/setup.sh setup
 
 start: ## Start all services
@@ -92,31 +91,26 @@ list-models: ## List available models
 	@bash scripts/model-manager.sh list
 
 pull: ## Download a model (usage: make pull llama3.2:1b)
-	@if [ -z "$(ARGS)" ]; then \
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
 		echo -e "$(RED)Error: Please specify a model$(RESET)"; \
 		echo "Usage: make pull <model>"; \
 		echo "Example: make pull llama3.2:1b"; \
 		bash scripts/model-manager.sh list; \
 	else \
-		bash scripts/model-manager.sh pull $(ARGS); \
+		bash scripts/model-manager.sh pull $(filter-out $@,$(MAKECMDGOALS)); \
 	fi
 
 switch: ## Switch to a model (usage: make switch llama3.2:11b) 
-	@if [ -z "$(ARGS)" ]; then \
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
 		echo -e "$(RED)Error: Please specify a model$(RESET)"; \
 		echo "Usage: make switch <model>"; \
 		echo "Example: make switch llama3.2:11b"; \
 		bash scripts/model-manager.sh list; \
 	else \
-		bash scripts/model-manager.sh switch $(ARGS); \
+		bash scripts/model-manager.sh switch $(filter-out $@,$(MAKECMDGOALS)); \
 	fi
 
 # Usage Commands
-chat: ## Start interactive chat
-	@echo -e "$(BLUE)Starting interactive chat...$(RESET)"
-	@echo -e "$(YELLOW)Tip: Type 'quit' to exit$(RESET)"
-	@bash scripts/setup.sh interactive
-
 web: ## Show web UI URL  
 	@echo -e "$(BLUE)Web UI available at:$(RESET)"
 	@echo -e "$(GREEN)http://localhost:3000$(RESET)"
