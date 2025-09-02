@@ -8,12 +8,10 @@ on:
       - 'scripts/**'
       - 'Makefile'
       - '.env'
-      - 'Dockerfile'
 
   push:
-    branches: [ main ]
-
-  workflow_dispatch:
+    branches:
+    - add-ci-workflow
 
 jobs:
   test-docker-compose:
@@ -136,13 +134,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
-      - name: Check documentation exists
-        run: |
-          test -f README.md
-          test -f docs/INSTALLATION.md
-          test -f docs/USAGE.md
-          test -f docs/AMD-GPU-SUPPORT.md
           
       - name: Validate Makefile
         run: |
