@@ -99,16 +99,27 @@ jobs:
         run: |
           # Remove GPU-specific configs for CI
           if [[ "${{ matrix.config.compose_file }}" == "docker-compose.yml" ]]; then
-            # Remove NVIDIA runtime for CI
+            # Remove NVIDIA runtime and environment variables
             sed -i '/runtime: nvidia/d' docker-compose.yml
-            sed -i '/NVIDIA_/d' docker-compose.yml
+            sed -i '/NVIDIA_VISIBLE_DEVICES/d' docker-compose.yml
+            sed -i '/NVIDIA_DRIVER_CAPABILITIES/d' docker-compose.yml
           else
-            # Remove AMD GPU configs for CI
-            sed -i '/devices:/,+2d' docker-compose.yml
-            sed -i '/group_add:/,+2d' docker-compose.yml
-            sed -i '/ROC_/d' docker-compose.yml
-            sed -i '/HIP_/d' docker-compose.yml
+            # Remove AMD GPU configs more carefully
+            sed -i '/- \/dev\/kfd/d' docker-compose.yml
+            sed -i '/- \/dev\/dri/d' docker-compose.yml
+            sed -i '/ROC_ENABLE_PRE_VEGA/d' docker-compose.yml
+            sed -i '/HIP_VISIBLE_DEVICES/d' docker-compose.yml
+            sed -i '/ROCR_VISIBLE_DEVICES/d' docker-compose.yml
+            # Remove devices section and group_add section
+            sed -i '/devices:/,/- \/dev\/dri/d' docker-compose.yml
+            sed -i '/group_add:/,/- audio/d' docker-compose.yml
           fi
+          
+          # Validate the modified compose file
+          echo "=== Modified docker-compose.yml for CI ==="
+          cat docker-compose.yml
+          echo "=== Validating modified compose file ==="
+          docker compose config
           
           # Start services
           docker compose up -d
