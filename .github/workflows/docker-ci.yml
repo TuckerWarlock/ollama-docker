@@ -10,15 +10,64 @@ on:
       - '.env'
 
   push:
-    branches:
-    - add-ci-workflow
+    branches: [ add-ci-workflow ] # for testing purposes
 
 jobs:
+  validate-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Check documentation exists
+        run: |
+          test -f README.md
+          test -f docs/INSTALLATION.md
+          test -f docs/USAGE.md
+          test -f docs/AMD-GPU-SUPPORT.md
+          
+      - name: Validate Makefile
+        run: |
+          make help
+          
+      - name: Check required scripts
+        run: |
+          test -f scripts/setup.sh
+          test -f scripts/model-manager.sh  
+          test -f scripts/cleanup.sh
+          test -f scripts/setup-amd.sh
+
+  check-commands:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test Makefile syntax
+        run: |
+          make -n help
+          make -n setup || true
+          make -n clean || true
+          
+      - name: Check script permissions
+        run: |
+          chmod +x scripts/*.sh
+          ls -la scripts/
+          
+      - name: Test script syntax
+        run: |
+          bash -n scripts/setup.sh
+          bash -n scripts/model-manager.sh
+          bash -n scripts/cleanup.sh
+          bash -n scripts/setup-amd.sh
+
   test-docker-compose:
+    needs: [validate-documentation, check-commands]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     
     strategy:
+      fail-fast: false
       matrix:
         config:
           - name: "NVIDIA/CPU Config"
@@ -36,7 +85,9 @@ jobs:
       - name: Validate Docker Compose file
         run: |
           echo "Testing ${{ matrix.config.name }}"
-          cp ${{ matrix.config.compose_file }} docker-compose.yml
+          if [[ "${{ matrix.config.compose_file }}" != "docker-compose.yml" ]]; then
+            cp ${{ matrix.config.compose_file }} docker-compose.yml
+          fi
           docker compose config
 
       - name: Create test environment
@@ -128,44 +179,3 @@ jobs:
         run: |
           docker compose down -v
           docker system prune -af
-
-  validate-documentation:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-          
-      - name: Validate Makefile
-        run: |
-          make help
-          
-      - name: Check required scripts
-        run: |
-          test -f scripts/setup.sh
-          test -f scripts/model-manager.sh  
-          test -f scripts/cleanup.sh
-          test -f scripts/setup-amd.sh
-
-  test-makefile:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Test Makefile syntax
-        run: |
-          make -n help
-          make -n setup || true
-          make -n clean || true
-          
-      - name: Check script permissions
-        run: |
-          chmod +x scripts/*.sh
-          ls -la scripts/
-          
-      - name: Test script syntax
-        run: |
-          bash -n scripts/setup.sh
-          bash -n scripts/model-manager.sh
-          bash -n scripts/cleanup.sh
-          bash -n scripts/setup-amd.sh
