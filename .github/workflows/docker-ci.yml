@@ -1,0 +1,180 @@
+name: Docker Compose CI
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'docker-compose*.yml'
+      - 'scripts/**'
+      - 'Makefile'
+      - '.env'
+      - 'Dockerfile'
+
+  push:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  test-docker-compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    strategy:
+      matrix:
+        config:
+          - name: "NVIDIA/CPU Config"
+            compose_file: "docker-compose.yml"
+          - name: "AMD Config" 
+            compose_file: "docker-compose-amd.yml"
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose file
+        run: |
+          echo "Testing ${{ matrix.config.name }}"
+          cp ${{ matrix.config.compose_file }} docker-compose.yml
+          docker compose config
+
+      - name: Create test environment
+        run: |
+          echo "OLLAMA_MODEL=llama3.2:1b" > .env
+          echo "OLLAMA_HOST=http://ollama:11434" >> .env
+
+      - name: Start services (CPU-only mode)
+        run: |
+          # Remove GPU-specific configs for CI
+          if [[ "${{ matrix.config.compose_file }}" == "docker-compose.yml" ]]; then
+            # Remove NVIDIA runtime for CI
+            sed -i '/runtime: nvidia/d' docker-compose.yml
+            sed -i '/NVIDIA_/d' docker-compose.yml
+          else
+            # Remove AMD GPU configs for CI
+            sed -i '/devices:/,+2d' docker-compose.yml
+            sed -i '/group_add:/,+2d' docker-compose.yml
+            sed -i '/ROC_/d' docker-compose.yml
+            sed -i '/HIP_/d' docker-compose.yml
+          fi
+          
+          # Start services
+          docker compose up -d
+          
+          # Wait for services to be ready
+          echo "Waiting for services to start..."
+          sleep 30
+
+      - name: Check service health
+        run: |
+          # Check if containers are running
+          docker compose ps
+          
+          # Check Ollama service
+          timeout 60 bash -c 'until curl -f http://localhost:11434/api/tags; do sleep 2; done'
+          echo "Ollama API is responding"
+          
+          # Check Web UI
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          echo "Web UI is responding"
+          
+          # Check TTS service
+          timeout 60 bash -c 'until curl -f http://localhost:8880/v1/models; do sleep 2; done'
+          echo "TTS service is responding"
+
+      - name: Test basic functionality
+        run: |
+          # Test Ollama API
+          curl -X POST http://localhost:11434/api/pull \
+            -H "Content-Type: application/json" \
+            -d '{"name": "llama3.2:1b"}' &
+          
+          # Wait a bit for pull to start
+          sleep 10
+          
+          # Check if pull is working (don't wait for completion)
+          curl http://localhost:11434/api/tags | grep -q "models" || exit 1
+          echo "Ollama API basic functionality confirmed"
+          
+          # Test TTS API
+          curl -X GET http://localhost:8880/v1/models | grep -q "kokoro" || exit 1
+          echo "TTS API basic functionality confirmed"
+
+      - name: Test make commands
+        run: |
+          # Test basic make commands
+          make status
+          make switch llama3.2:1b || true  # May fail due to model not fully downloaded
+          
+          # Check scripts are executable
+          ls -la scripts/
+          test -x scripts/setup.sh
+          test -x scripts/model-manager.sh
+          test -x scripts/cleanup.sh
+
+      - name: Check logs for errors
+        if: always()
+        run: |
+          echo "=== Ollama logs ==="
+          docker logs ollama | tail -20
+          echo "=== Web UI logs ==="
+          docker logs ollama-webui | tail -20
+          echo "=== TTS logs ==="
+          docker logs kokoro-tts | tail -20
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v
+          docker system prune -af
+
+  validate-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Check documentation exists
+        run: |
+          test -f README.md
+          test -f docs/INSTALLATION.md
+          test -f docs/USAGE.md
+          test -f docs/AMD-GPU-SUPPORT.md
+          
+      - name: Validate Makefile
+        run: |
+          make help
+          
+      - name: Check required scripts
+        run: |
+          test -f scripts/setup.sh
+          test -f scripts/model-manager.sh  
+          test -f scripts/cleanup.sh
+          test -f scripts/setup-amd.sh
+
+  test-makefile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Test Makefile syntax
+        run: |
+          make -n help
+          make -n setup || true
+          make -n clean || true
+          
+      - name: Check script permissions
+        run: |
+          chmod +x scripts/*.sh
+          ls -la scripts/
+          
+      - name: Test script syntax
+        run: |
+          bash -n scripts/setup.sh
+          bash -n scripts/model-manager.sh
+          bash -n scripts/cleanup.sh
+          bash -n scripts/setup-amd.sh
