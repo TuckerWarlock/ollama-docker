@@ -24,10 +24,15 @@ log_warning() {
 # Available models with descriptions
 declare -A MODELS
 MODELS[llama3.2:1b]="Fastest, smallest (1B params, ~1GB VRAM)"
-MODELS[llama3.2:3b]="Balanced (3B params, ~2GB VRAM)"  
-MODELS[llama3.2:11b]="Highest quality (11B params, ~6-7GB VRAM)"
+MODELS[llama3.2:3b]="Balanced option (3B params, ~2GB VRAM)"
+MODELS[codellama:3b]="Code-focused (3B params, ~2GB VRAM)"
 MODELS[codellama:7b]="Code-focused (7B params, ~4GB VRAM)"
+MODELS[mistral:3b]="Alternative option (3B params, ~2GB VRAM)"
 MODELS[mistral:7b]="Alternative option (7B params, ~4GB VRAM)"
+MODELS[qwen2.5-coder:3b]="Qwen 2.5 Coder (3B params, ~2GB VRAM)"
+MODELS[qwen2.5-coder:7b]="Qwen 2.5 Coder (7B params, ~4GB VRAM)"
+MODELS[gemma3:1b]="Gemma 3 (1B params, ~1GB VRAM)"
+MODELS[gemma3:4b]="Gemma 3 (4B params, ~3GB VRAM)"
 
 # Current model from .env
 get_current_model() {

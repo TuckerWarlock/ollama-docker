@@ -1,0 +1,57 @@
+name: Local Agent
+version: 1.0.0  
+schema: v1
+models:
+  - name: llama3.2:1b
+    provider: ollama
+    model: llama3.2:1b
+    apiBase: http://localhost:11434
+    
+  - name: llama3.2:3b
+    provider: ollama  
+    model: llama3.2:3b
+    apiBase: http://localhost:11434
+    
+  - name: llama3.2:11b
+    provider: ollama
+    model: llama3.2:11b
+    apiBase: http://localhost:11434
+    
+  - name: codellama:3b
+    provider: ollama
+    model: codellama:3b
+    apiBase: http://localhost:11434
+    
+  - name: codellama:7b
+    provider: ollama
+    model: codellama:7b
+    apiBase: http://localhost:11434
+    
+  - name: mistral:3b
+    provider: ollama
+    model: mistral:3b
+    apiBase: http://localhost:11434
+    
+  - name: mistral:7b
+    provider: ollama
+    model: mistral:7b
+    apiBase: http://localhost:11434
+    
+  - name: qwen2.5-coder:3b
+    provider: ollama
+    model: qwen2.5-coder:3b
+    apiBase: http://localhost:11434
+    
+  - name: qwen2.5-coder:7b
+    provider: ollama
+    model: qwen2.5-coder:7b
+    apiBase: http://localhost:11434
+
+context:
+  - provider: code
+  - provider: docs  
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase
