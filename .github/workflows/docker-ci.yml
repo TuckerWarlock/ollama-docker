@@ -9,9 +9,6 @@ on:
       - 'Makefile'
       - '.env'
 
-  push:
-    branches: [ add-ci-workflow ] # for testing purposes
-
 jobs:
   validate-documentation:
     runs-on: ubuntu-latest
