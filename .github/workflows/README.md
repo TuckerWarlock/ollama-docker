@@ -4,81 +4,168 @@ This directory contains CI/CD workflows for the Ollama Docker project.
 
 ## docker-ci.yml
 
-Automated testing workflow that validates Docker Compose configurations and service functionality.
+Lightweight validation workflow that ensures Docker Compose configurations are correct and project structure is sound.
 
 ### When It Runs
 
 - **Pull requests** to main/develop branches
-- **Pushes** to main branch
-- **Manual dispatch** via GitHub UI
-- **File changes** to: `docker-compose*.yml`, `scripts/`, `Makefile`, `.env`, `Dockerfile`
+- **File changes** to: `docker-compose*.yml`, `scripts/**`, `Makefile`, `.env`
 
 ### What It Tests
 
-**Service Integration:**
-- Both NVIDIA and AMD Docker Compose configurations
-- All services start correctly (Ollama, Web UI, TTS)
-- API endpoints respond (ports 11434, 3000, 8880)
-- Basic model pulling functionality
+**Documentation & Structure:**
+- Required documentation files exist (`README.md`, `docs/`)
+- All shell scripts have correct syntax and executable permissions
+- Makefile syntax and available targets
 
-**Configuration Validation:**
-- Docker Compose YAML syntax
-- Makefile syntax and commands
-- Script permissions and shell syntax
-- Required documentation files exist
+**Docker Compose Validation:**
+- YAML syntax validation for all compose files
+- Service structure verification (ollama, webui, tts services exist)
+- Port mapping validation (11434, 3000, 8880)
+- Volume configuration checks
+- GPU configuration detection (NVIDIA vs AMD)
 
-**Quality Checks:**
-- Container logs for errors
-- Service health endpoints
-- Make commands execute without syntax errors
+**Lightweight Service Testing:**
+- Service connectivity simulation using nginx/httpd
+- API endpoint structure validation
+- Inter-service communication patterns
+- Dependency chain verification
 
 ### Test Matrix
 
-- **NVIDIA Config**: `docker-compose.yml` (CPU mode in CI)
-- **AMD Config**: `docker-compose-amd.yml` (CPU mode in CI)
+- **NVIDIA Config**: `docker-compose.yml` - validates GPU runtime configuration
+- **AMD Config**: `docker-compose-amd.yml` - validates ROCm/HIP configuration
 
-### CI Adaptations
+### Validation Jobs
 
-- **GPU configs stripped** - CI runners don't have GPUs
-- **Small model used** - `llama3.2:1b` for faster testing
-- **Partial downloads** - Tests API without waiting for full model downloads
-- **20-minute timeout** - Prevents hanging builds
+1. **validate-documentation** - Checks required files exist
+2. **validate-scripts** - Tests shell script syntax and permissions  
+3. **validate-compose-syntax** - Validates Docker Compose YAML files
+4. **test-lightweight-services** - Simulates service connectivity
+5. **validate-make-targets** - Tests Makefile target syntax
+
+### Why Lightweight Testing?
+
+This workflow prioritizes **fast, reliable validation** over comprehensive integration testing:
+
+- ✅ **No large image downloads** (Ollama images are 1-4GB)
+- ✅ **No GPU dependencies** (not available in CI runners)
+- ✅ **Quick feedback** (~5 minutes vs 20+ minutes)
+- ✅ **Reliable results** (no network timeouts or hardware issues)
+
+### What It Validates
+
+**Configuration Correctness:**
+- Docker Compose files parse without errors
+- All required services are defined
+- Port mappings match expected values
+- Volume configurations are present
+- GPU settings are properly configured
+
+**Code Quality:**
+- Shell scripts have valid syntax
+- Scripts have executable permissions
+- Makefile targets are syntactically correct
+- Documentation structure is complete
+
+**Service Architecture:**
+- Services can communicate (simulated)
+- Dependency relationships are correct
+- API endpoints are structured properly
 
 ### What It Doesn't Test
 
-- GPU functionality (requires actual hardware)
-- Audio/voice features (no microphone in CI)
-- Browser interactions (headless environment)
-- Full model performance (network/time constraints)
+- **Actual GPU functionality** (requires specialized hardware)
+- **Model downloading/loading** (too large/slow for CI)
+- **Real Ollama inference** (resource intensive)
+- **Audio/TTS generation** (requires audio hardware)
+- **Full integration** (browser testing, complex workflows)
 
-### Adding New Tests
+### Adding New Components
 
-To add tests for new components:
+To add validation for new services or configurations:
 
-1. **Service health check**: Add API endpoint test to `test-docker-compose` job
-2. **Configuration validation**: Add file validation to `validate-documentation` job  
-3. **Script testing**: Add syntax check to `test-makefile` job
+1. **New compose file**: Add to `validate-compose-syntax` matrix
+2. **New script**: Automatically tested if placed in `scripts/` directory
+3. **New service**: Add port/health check to `test-lightweight-services`
+4. **New documentation**: Add file check to `validate-documentation`
 
 ### Local Testing
 
-Run similar tests locally:
+Run similar validations locally:
 
 ```bash
-# Validate compose files
-docker compose config
+# Validate Docker Compose syntax
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose-amd.yml config --quiet
 
-# Test service startup
+# Check script syntax
+bash -n scripts/*.sh
+
+# Test Makefile
+make -n help
+
+# Verify file structure
+ls docs/ scripts/ README.md
+```
+
+### Integration Testing Locally
+
+For full integration testing with real services:
+
+```bash
+# NVIDIA setup
 make setup
 make status
 
-# Test scripts
-bash -n scripts/*.sh
+# AMD setup  
+docker compose -f docker-compose-amd.yml up -d
+
+# Test APIs
+curl http://localhost:11434/api/tags
+curl http://localhost:3000
+curl http://localhost:8880/v1/models
 ```
 
 ### Debugging Failed Builds
 
-Check the workflow logs for:
-- Container startup errors in service logs
-- API connectivity timeouts
-- Missing files or permissions issues
-- Docker Compose validation errors
+Common failure patterns and solutions:
+
+**YAML Syntax Errors:**
+```bash
+# Check locally
+docker compose config
+# Fix indentation, quotes, or structure
+```
+
+**Script Syntax Errors:**
+```bash
+# Check scripts locally
+bash -n scripts/problematic-script.sh
+# Fix shell syntax issues
+```
+
+**Missing Files:**
+```bash
+# Ensure required files exist
+ls README.md docs/INSTALLATION.md docs/USAGE.md docs/AMD-GPU-SUPPORT.md
+```
+
+**Service Configuration Issues:**
+```bash
+# Validate service definitions
+docker compose config --services
+# Check port mappings and dependencies
+```
+
+### Workflow Philosophy
+
+This workflow follows the principle of **"validate early, validate often"** by:
+
+- Catching configuration errors before deployment
+- Ensuring consistent project structure
+- Validating service architecture without resource overhead
+- Providing fast feedback to contributors
+- Maintaining reliability across different environments
+
+The workflow complements local testing rather than replacing it, giving you confidence that your configurations will work when deployed to real hardware.
