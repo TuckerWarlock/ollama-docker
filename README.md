@@ -1,6 +1,7 @@
 # Ollama Project
 
 A Docker-based setup for running large language models locally with voice conversation capabilities.
+Uses the WebUI from this project: https://github.com/open-webui/open-webui
 
 ## Features
 
