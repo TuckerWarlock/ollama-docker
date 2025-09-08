@@ -68,3 +68,8 @@ Voice features work automatically on most systems. For configuration:
 - [INSTALLATION.md](./docs/INSTALLATION.md) - Setup instructions
 - [USAGE.md](./docs/USAGE.md) - Usage examples
 - [AMD-GPU-SUPPORT.md](./docs/AMD-GPU-SUPPORT.md) - AMD GPU setup
+
+### Other Uses
+
+- Added [continue config](./continue-config.yml) so these local models can be used as coding agents within VSCode. 
+- See: https://marketplace.visualstudio.com/items?itemName=Continue.continue for more details.
