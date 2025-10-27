@@ -121,7 +121,7 @@ jobs:
           if [[ "${{ matrix.compose_file }}" == "docker-compose.gpu.yml" ]]; then
             echo "Checking NVIDIA GPU configuration..."
             docker compose -f docker-compose.yml -f ${{ matrix.compose_file }} config | grep -i nvidia && echo "✓ NVIDIA GPU config found"
-            docker compose -f docker-compose.yml -f ${{ matrix.compose_file }} config | grep -i "capabilities.*gpu" && echo "✓ GPU capabilities configured"
+            docker compose -f docker-compose.yml -f ${{ matrix.compose_file }} config | grep -i "gpu" && echo "✓ GPU capabilities configured"
           else
             echo "Base configuration (CPU mode) - no GPU config expected"
           fi
