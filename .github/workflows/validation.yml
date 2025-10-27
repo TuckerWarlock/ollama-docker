@@ -77,15 +77,27 @@ jobs:
       - name: Validate ${{ matrix.compose_file }} syntax
         run: |
           echo "Validating ${{ matrix.compose_file }}"
-          docker compose -f ${{ matrix.compose_file }} config --quiet
+          if [[ "${{ matrix.compose_file }}" == "docker-compose.gpu.yml" ]]; then
+            echo "GPU override file - validating with base config"
+            docker compose -f docker-compose.yml -f ${{ matrix.compose_file }} config --quiet
+          else
+            docker compose -f ${{ matrix.compose_file }} config --quiet
+          fi
           echo "✓ ${{ matrix.compose_file }} syntax is valid"
 
       - name: Check compose file structure
         run: |
           echo "=== Analyzing ${{ matrix.compose_file }} structure ==="
 
+          # Set compose command based on file type
+          if [[ "${{ matrix.compose_file }}" == "docker-compose.gpu.yml" ]]; then
+            COMPOSE_CMD="docker compose -f docker-compose.yml -f ${{ matrix.compose_file }}"
+          else
+            COMPOSE_CMD="docker compose -f ${{ matrix.compose_file }}"
+          fi
+
           # Check services are defined
-          SERVICES=$(docker compose -f ${{ matrix.compose_file }} config --services)
+          SERVICES=$($COMPOSE_CMD config --services)
           echo "Services defined: $SERVICES"
 
           # Verify expected services exist
@@ -94,12 +106,12 @@ jobs:
           echo "$SERVICES" | grep -q "kokoro-tts" && echo "✓ kokoro-tts service found"
 
           # Check for required ports
-          docker compose -f ${{ matrix.compose_file }} config | grep -q "11434:11434" && echo "✓ Ollama port mapping found"
-          docker compose -f ${{ matrix.compose_file }} config | grep -q "3000:8080" && echo "✓ Web UI port mapping found"
-          docker compose -f ${{ matrix.compose_file }} config | grep -q "8880:8880" && echo "✓ TTS port mapping found"
+          $COMPOSE_CMD config | grep -q "11434:11434" && echo "✓ Ollama port mapping found"
+          $COMPOSE_CMD config | grep -q "3000:8080" && echo "✓ Web UI port mapping found"
+          $COMPOSE_CMD config | grep -q "8880:8880" && echo "✓ TTS port mapping found"
 
           # Check volumes are defined
-          VOLUMES=$(docker compose -f ${{ matrix.compose_file }} config --volumes)
+          VOLUMES=$($COMPOSE_CMD config --volumes)
           echo "Volumes defined: $VOLUMES"
 
       - name: Check GPU configuration
