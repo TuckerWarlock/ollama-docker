@@ -92,7 +92,8 @@ set_model() {
 
 # List available models
 list_models() {
-    local current=$(get_current_model)
+    local current
+    current=$(get_current_model)
 
     echo "Available models:"
     for entry in "${MODELS[@]}"; do
@@ -151,7 +152,8 @@ switch_model() {
 
 # Show current status
 status() {
-    local current=$(get_current_model)
+    local current
+    current=$(get_current_model)
     echo "Current model: $current"
     echo "Description: $(get_model_description "$current")"
 

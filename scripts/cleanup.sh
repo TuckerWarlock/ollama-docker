@@ -43,7 +43,7 @@ stop_project_containers() {
     for pattern in "${PROJECT_PATTERNS[@]}"; do
         containers=$(docker ps -a --format "table {{.Names}}" | grep -E "(${pattern}|ollama|webui)" 2>/dev/null || true)
         if [[ -n "$containers" ]]; then
-            echo "$containers" | while read container; do
+            echo "$containers" | while read -r container; do
                 if [[ "$container" != "NAMES" ]]; then
                     log_info "Stopping container: $container"
                     docker stop "$container" 2>/dev/null || true
@@ -63,7 +63,7 @@ cleanup_volumes() {
     for pattern in "${PROJECT_PATTERNS[@]}"; do
         volumes=$(docker volume ls --format "table {{.Name}}" | grep "$pattern" 2>/dev/null || true)
         if [[ -n "$volumes" ]]; then
-            echo "$volumes" | while read volume; do
+            echo "$volumes" | while read -r volume; do
                 if [[ "$volume" != "NAME" ]]; then
                     log_info "Removing volume: $volume"
                     docker volume rm "$volume" 2>/dev/null || true
@@ -82,7 +82,7 @@ cleanup_networks() {
     for pattern in "${PROJECT_PATTERNS[@]}"; do
         networks=$(docker network ls --format "table {{.Name}}" | grep "$pattern" 2>/dev/null || true)
         if [[ -n "$networks" ]]; then
-            echo "$networks" | while read network; do
+            echo "$networks" | while read -r network; do
                 if [[ "$network" != "NAME" ]]; then
                     log_info "Removing network: $network"
                     docker network rm "$network" 2>/dev/null || true
@@ -105,7 +105,7 @@ cleanup_images() {
     for pattern in "${PROJECT_PATTERNS[@]}"; do
         project_images=$(echo "$all_images" | grep "$pattern" 2>/dev/null || true)
         if [[ -n "$project_images" ]]; then
-            echo "$project_images" | while read image; do
+            echo "$project_images" | while read -r image; do
                 log_info "Removing project image: $image"
                 docker rmi "$image" 2>/dev/null || true
             done
@@ -126,7 +126,7 @@ cleanup_all_images() {
     for pattern in "${PROJECT_PATTERNS[@]}"; do
         project_images=$(echo "$all_images" | grep "$pattern" 2>/dev/null || true)
         if [[ -n "$project_images" ]]; then
-            echo "$project_images" | while read image; do
+            echo "$project_images" | while read -r image; do
                 log_info "Removing project image: $image"
                 docker rmi "$image" 2>/dev/null || true
             done
