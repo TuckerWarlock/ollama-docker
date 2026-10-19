@@ -3,6 +3,7 @@
 
 .PHONY: help setup start stop restart status logs chat clean reset
 .PHONY: list-models pull switch
+.PHONY: comfyui-install comfyui start-image start-image-gpu list-image-models pull-image image-webui gen
 .DEFAULT_GOAL := help
 
 # Colors for output
@@ -37,6 +38,16 @@ help: ## Show this help message
 	@printf "  $(YELLOW)make switch MODEL$(RESET)   - Switch to a model (e.g., make switch llama3.2:1b)\n"
 	@printf "  $(YELLOW)make pull MODEL$(RESET)     - Download a model\n"
 	@printf "  $(YELLOW)make pull-hf MODEL$(RESET)  - Download from HuggingFace (bypasses VPN/cert issues)\n"
+	@printf "\n"
+	@printf "$(GREEN)Image Generation (ComfyUI):$(RESET)\n"
+	@printf "  $(YELLOW)make comfyui-install$(RESET) - Install ComfyUI natively (macOS / no Docker GPU)\n"
+	@printf "  $(YELLOW)make comfyui$(RESET)         - Run native ComfyUI (http://127.0.0.1:8188)\n"
+	@printf "  $(YELLOW)make start-image$(RESET)     - Start services + Web UI image generation\n"
+	@printf "  $(YELLOW)make start-image-gpu$(RESET) - Same, with ComfyUI in Docker (NVIDIA)\n"
+	@printf "  $(YELLOW)make list-image-models$(RESET) - List image models\n"
+	@printf "  $(YELLOW)make pull-image MODEL$(RESET) - Download image model files (e.g., make pull-image z-image-turbo)\n"
+	@printf "  $(YELLOW)make image-webui MODEL$(RESET) - Switch Web UI image model (then make start-image)\n"
+	@printf "  $(YELLOW)make gen PROMPT=\"...\"$(RESET) - Generate an image (IMAGE_MODEL, STEPS, SIZE, SEED optional)\n"
 	@printf "\n"
 	@printf "$(GREEN)Usage:$(RESET)\n"
 	@printf "  $(YELLOW)make web$(RESET)            - Open web UI (http://localhost:3000)\n"
@@ -127,6 +138,40 @@ switch: ## Switch to a model (usage: make switch llama3.2:11b)
 		bash scripts/model-manager.sh list; \
 	else \
 		bash scripts/model-manager.sh switch $(filter-out $@,$(MAKECMDGOALS)); \
+	fi
+
+# Image Generation Commands (ComfyUI)
+IMAGE_MODEL ?= z-image-turbo
+
+comfyui-install: ## Install ComfyUI natively (macOS Apple Silicon / no Docker GPU)
+	@bash scripts/comfyui-native.sh install
+
+comfyui: ## Run native ComfyUI in the foreground
+	@bash scripts/comfyui-native.sh run
+
+start-image: ## Start services with Web UI image generation (native ComfyUI)
+	@IMAGE_MODEL=$(IMAGE_MODEL) bash scripts/setup.sh start-image
+
+start-image-gpu: ## Start services with containerized ComfyUI (NVIDIA)
+	@IMAGE_MODEL=$(IMAGE_MODEL) bash scripts/setup.sh start-image-gpu
+
+list-image-models: ## List image models
+	@python3 scripts/image-gen.py list
+
+pull-image: ## Download image model files (usage: make pull-image z-image-turbo)
+	@python3 scripts/image-gen.py pull $(or $(filter-out $@,$(MAKECMDGOALS)),$(IMAGE_MODEL))
+
+image-webui: ## Point Web UI image generation at a model (usage: make image-webui z-image-turbo)
+	@python3 scripts/image-gen.py webui-env $(or $(filter-out $@,$(MAKECMDGOALS)),$(IMAGE_MODEL))
+	@printf "$(YELLOW)Restart to apply: make start-image$(RESET)\n"
+
+gen: ## Generate an image (usage: make gen PROMPT="a red fox" [IMAGE_MODEL=..] [STEPS=..] [SIZE=WxH] [SEED=..])
+	@if [ -z "$(PROMPT)" ]; then \
+		printf "$(RED)Error: Please specify a prompt$(RESET)\n"; \
+		printf "Usage: make gen PROMPT=\"a red fox in snow\"\n"; \
+	else \
+		python3 scripts/image-gen.py gen $(IMAGE_MODEL) "$(PROMPT)" \
+			$(if $(STEPS),--steps $(STEPS)) $(if $(SIZE),--size $(SIZE)) $(if $(SEED),--seed $(SEED)); \
 	fi
 
 # Usage Commands

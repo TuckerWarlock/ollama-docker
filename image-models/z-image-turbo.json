@@ -1,0 +1,31 @@
+{
+  "description": "Z-Image Turbo (6B, Apache-2.0) - Q4_K_M GGUF, ~7.8GB total, fast 9-step generation",
+  "workflow": "z-image",
+  "files": [
+    {
+      "url": "https://huggingface.co/jayn7/Z-Image-Turbo-GGUF/resolve/main/z_image_turbo-Q4_K_M.gguf",
+      "dir": "diffusion_models"
+    },
+    {
+      "url": "https://huggingface.co/unsloth/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf",
+      "dir": "text_encoders"
+    },
+    {
+      "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors",
+      "dir": "vae"
+    }
+  ],
+  "defaults": {
+    "model": "z_image_turbo-Q4_K_M.gguf",
+    "text_encoder": "Qwen3-4B-Q4_K_M.gguf",
+    "vae": "ae.safetensors",
+    "negative": "",
+    "width": 1024,
+    "height": 1024,
+    "steps": 9,
+    "cfg": 1.0,
+    "shift": 3.0,
+    "sampler": "euler",
+    "scheduler": "simple"
+  }
+}

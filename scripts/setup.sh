@@ -114,6 +114,33 @@ start_gpu() {
     log_success "Services started with GPU support"
 }
 
+# Start with ComfyUI image generation (ComfyUI runs natively on the host)
+start_image() {
+    log_info "Starting services with image generation..."
+    python3 scripts/image-gen.py webui-env "${IMAGE_MODEL:-z-image-turbo}"
+    docker compose -f docker-compose.yml -f docker-compose.comfyui.yml up -d
+    log_success "Services started - image generation uses ComfyUI at http://127.0.0.1:8188"
+    log_info "Make sure ComfyUI is running: make comfyui"
+    # Open WebUI needs a chat model selected even for image generation
+    wait_for_service "ollama" || exit 1
+    if ! docker exec ollama ollama list | grep -q "^llama3.2:3b "; then
+        log_warning "Image Studio writes prompts with llama3.2:3b, which isn't downloaded. Run: make pull-hf llama3.2:3b"
+    fi
+    wait_for_service "ollama-webui" 60 || exit 1
+    python3 scripts/image-gen.py webui-install
+}
+
+# Start with containerized ComfyUI on NVIDIA GPU
+start_image_gpu() {
+    log_info "Starting services with GPU image generation..."
+    python3 scripts/image-gen.py webui-env "${IMAGE_MODEL:-z-image-turbo}"
+    docker compose -f docker-compose.yml -f docker-compose.gpu.yml \
+        -f docker-compose.comfyui.yml -f docker-compose.comfyui-gpu.yml up -d --build
+    log_success "Services started - ComfyUI at http://localhost:8188"
+    wait_for_service "ollama-webui" 60 || exit 1
+    python3 scripts/image-gen.py webui-install
+}
+
 # Setup with GPU function
 setup_gpu() {
     log_info "Setting up Ollama Docker Project with GPU support..."
@@ -153,7 +180,7 @@ setup_gpu() {
 # Stop function
 stop() {
     log_info "Stopping services..."
-    docker compose down
+    docker compose down --remove-orphans
     log_success "Services stopped"
 }
 
@@ -169,13 +196,15 @@ status() {
 
 # Help function
 help() {
-    echo "Usage: $0 {setup|setup-gpu|start|start-gpu|stop|logs|status|help}"
+    echo "Usage: $0 {setup|setup-gpu|start|start-gpu|start-image|start-image-gpu|stop|logs|status|help}"
     echo ""
     echo "Commands:"
     echo "  setup       - Initial setup (CPU mode)"
     echo "  setup-gpu   - Initial setup with NVIDIA GPU support"
     echo "  start       - Start all services (CPU mode)"
     echo "  start-gpu   - Start all services with GPU support"
+    echo "  start-image - Start with image generation (native ComfyUI on host)"
+    echo "  start-image-gpu - Start with containerized ComfyUI (NVIDIA)"
     echo "  stop        - Stop all services"
     echo "  logs        - Show logs from all services"
     echo "  status      - Show service status"
@@ -197,6 +226,12 @@ case "${1:-}" in
         ;;
     start-gpu)
         start_gpu
+        ;;
+    start-image)
+        start_image
+        ;;
+    start-image-gpu)
+        start_image_gpu
         ;;
     stop)
         stop

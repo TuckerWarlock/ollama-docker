@@ -33,3 +33,10 @@ temp/
 *.bak
 *.backup
 docker-compose-amd.yml.bak
+
+# ComfyUI (native install, models, Open WebUI image config) and generated images
+/comfyui/
+/outputs/
+
+# Python bytecode
+__pycache__/
