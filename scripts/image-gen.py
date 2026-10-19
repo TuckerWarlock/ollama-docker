@@ -13,6 +13,7 @@ Usage:
     python3 scripts/image-gen.py webui-env z-image-turbo
     python3 scripts/image-gen.py webui-install
 """
+# pylint: disable=invalid-name  # hyphenated script name matches the other scripts/ files
 
 import argparse
 import json
@@ -48,6 +49,7 @@ WEBUI_NODE_TYPES = {
 
 
 def load_model(name: str) -> dict[str, Any]:
+    """Load image-models/<name>.json, exiting with the available names if it doesn't exist."""
     path = REGISTRY_DIR / f"{name}.json"
     if not path.is_file():
         available = ", ".join(sorted(p.stem for p in REGISTRY_DIR.glob("*.json")))
@@ -56,6 +58,7 @@ def load_model(name: str) -> dict[str, Any]:
 
 
 def load_workflow(model: dict[str, Any]) -> dict[str, Any]:
+    """Load the ComfyUI workflow template a model points at."""
     return json.loads((REGISTRY_DIR / "workflows" / f"{model['workflow']}.json").read_text())
 
 
@@ -72,15 +75,18 @@ def fill_workflow(workflow: dict[str, Any], params: dict[str, Any]) -> dict[str,
 
 
 def file_name(entry: dict[str, str]) -> str:
+    """Return the file name at the end of a download URL."""
     return Path(urllib.parse.urlparse(entry["url"]).path).name
 
 
 def cmd_list(_: argparse.Namespace) -> None:
+    """Print each registered image model and its description."""
     for path in sorted(REGISTRY_DIR.glob("*.json")):
         print(f"{path.stem:20} {json.loads(path.read_text()).get('description', '')}")
 
 
 def cmd_pull(args: argparse.Namespace) -> None:
+    """Download a model's files into comfyui/models, skipping files that already exist."""
     model = load_model(args.model)
     for entry in model["files"]:
         dest = COMFYUI_DIR / "models" / entry["dir"] / file_name(entry)
@@ -110,6 +116,7 @@ def cmd_pull(args: argparse.Namespace) -> None:
 
 
 def comfy_request(path: str, payload: dict[str, Any] | None = None) -> Any:
+    """GET (or POST when payload is given) a ComfyUI API path and return the JSON reply."""
     data = json.dumps(payload).encode() if payload is not None else None
     request = urllib.request.Request(
         COMFYUI_URL + path, data=data, headers={"Content-Type": "application/json"}
@@ -123,8 +130,8 @@ def comfy_request(path: str, payload: dict[str, Any] | None = None) -> Any:
         sys.exit(f"Cannot reach ComfyUI at {COMFYUI_URL} ({e.reason}). Is it running? (make comfyui)")
 
 
-def cmd_gen(args: argparse.Namespace) -> None:
-    model = load_model(args.model)
+def gen_params(args: argparse.Namespace, model: dict[str, Any]) -> dict[str, Any]:
+    """Merge a model's defaults with --set overrides and the dedicated flags."""
     params: dict[str, Any] = {**model["defaults"], "prompt": args.prompt}
     for item in args.set:
         key, _, value = item.partition("=")
@@ -139,7 +146,27 @@ def cmd_gen(args: argparse.Namespace) -> None:
         if getattr(args, key) is not None:
             params[key] = getattr(args, key)
     params["seed"] = args.seed if args.seed is not None else random.randint(0, 2**32 - 1)
+    return params
 
+
+def save_images(history: dict[str, Any], started: float) -> None:
+    """Download every image a finished ComfyUI job produced into outputs/."""
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    for output in history["outputs"].values():
+        for image in output.get("images", []):
+            query = urllib.parse.urlencode(
+                {"filename": image["filename"], "subfolder": image["subfolder"], "type": image["type"]}
+            )
+            dest = OUTPUT_DIR / image["filename"]
+            with urllib.request.urlopen(f"{COMFYUI_URL}/view?{query}") as resp:
+                dest.write_bytes(resp.read())
+            print(f"saved {dest} ({time.monotonic() - started:.0f}s)")
+
+
+def cmd_gen(args: argparse.Namespace) -> None:
+    """Fill the model's workflow, queue it in ComfyUI, wait for it, and save the images."""
+    model = load_model(args.model)
+    params = gen_params(args, model)
     workflow = fill_workflow(load_workflow(model), params)
     if args.dry_run:
         print(json.dumps(workflow, indent=2))
@@ -157,21 +184,11 @@ def cmd_gen(args: argparse.Namespace) -> None:
         if time.monotonic() - started > args.timeout:
             sys.exit(f"Timed out after {args.timeout}s waiting for {prompt_id}")
         time.sleep(1)
-
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    for output in history["outputs"].values():
-        for image in output.get("images", []):
-            query = urllib.parse.urlencode(
-                {"filename": image["filename"], "subfolder": image["subfolder"], "type": image["type"]}
-            )
-            dest = OUTPUT_DIR / image["filename"]
-            with urllib.request.urlopen(f"{COMFYUI_URL}/view?{query}") as resp:
-                dest.write_bytes(resp.read())
-            print(f"saved {dest} ({time.monotonic() - started:.0f}s)")
+    save_images(history, started)
 
 
 def cmd_webui_env(args: argparse.Namespace) -> None:
-    """Write comfyui/webui.env so Open WebUI's image button uses this model's workflow."""
+    """Write comfyui/webui.env so Open WebUI (and Image Studio) uses this model's workflow."""
     model = load_model(args.model)
     template = load_workflow(model)
     nodes = []
@@ -196,6 +213,7 @@ def cmd_webui_env(args: argparse.Namespace) -> None:
 
 
 def webui_request(path: str, payload: dict[str, Any], token: str | None = None) -> Any:
+    """POST JSON to an Open WebUI API path, optionally with a bearer token."""
     headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -226,6 +244,7 @@ def cmd_webui_install(_: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    """Parse the command line and run the chosen subcommand."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
 
