@@ -43,7 +43,7 @@ wait_for_service() {
 
     log_info "Waiting for $service to be ready..."
 
-    while [ $attempt -lt $max_attempts ]; do
+    while [ "$attempt" -lt "$max_attempts" ]; do
         # Check if container is healthy using docker inspect
         if docker inspect "$service" --format='{{.State.Health.Status}}' 2>/dev/null | grep -q "healthy"; then
             log_success "$service is ready"
@@ -84,7 +84,7 @@ setup() {
     log_info "This may take a few minutes depending on your internet connection..."
 
     # Use HuggingFace download script (works around corporate VPN/certificate issues)
-    if bash scripts/download-model-hf.sh ${OLLAMA_MODEL:-llama3.2:1b} 2>&1; then
+    if bash scripts/download-model-hf.sh "${OLLAMA_MODEL:-llama3.2:1b}" 2>&1; then
         log_success "Model downloaded and imported successfully"
     else
         log_warning "Model download failed"
@@ -161,7 +161,7 @@ setup_gpu() {
     log_info "This may take a few minutes depending on your internet connection..."
 
     # Use HuggingFace download script (works around corporate VPN/certificate issues)
-    if bash scripts/download-model-hf.sh ${OLLAMA_MODEL:-llama3.2:1b} 2>&1; then
+    if bash scripts/download-model-hf.sh "${OLLAMA_MODEL:-llama3.2:1b}" 2>&1; then
         log_success "Model downloaded and imported successfully"
     else
         log_warning "Model download failed"
