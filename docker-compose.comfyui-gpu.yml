@@ -1,0 +1,31 @@
+# Containerized ComfyUI for Linux + NVIDIA (layer on top of docker-compose.comfyui.yml)
+# Usage: make start-image-gpu
+# Requires: NVIDIA GPU + nvidia-container-toolkit installed
+
+services:
+  comfyui:
+    build: docker/comfyui
+    container_name: comfyui
+    restart: unless-stopped
+    ports:
+      - "8188:8188"
+    volumes:
+      - ./comfyui/models:/data/models
+      - ./comfyui/output:/data/output
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8188/system_stats')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ollama-webui:
+    environment:
+      - COMFYUI_BASE_URL=http://comfyui:8188

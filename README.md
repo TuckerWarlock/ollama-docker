@@ -71,6 +71,34 @@ container image rm ollama/ollama     # Remove the image (reclaims ~18GB)
 
 **Note**: This is a standalone Ollama setup. For the full experience with Web UI and voice features, use the Docker Compose setup (`make setup`).
 
+### Image Generation (ComfyUI, Optional)
+
+Generate images from the Web UI or the command line with [ComfyUI](https://github.com/comfyanonymous/ComfyUI). The default model is **Z-Image Turbo** (Q4_K_M GGUF, ~7.8GB download, Apache-2.0).
+
+**macOS (Apple Silicon)**: Docker can't use the Mac GPU, so ComfyUI runs natively:
+```bash
+make comfyui-install              # Clone ComfyUI v0.39.0 + ComfyUI-GGUF into ./comfyui
+make pull-image z-image-turbo     # Download model files (~7.8GB)
+make pull-hf llama3.2:3b          # Prompt-rewrite model for Image Studio (~2GB)
+make comfyui                      # Run ComfyUI at http://127.0.0.1:8188 (keep open)
+make start-image                  # In another terminal: start services + install Image Studio
+```
+
+In the Web UI, pick **Image Studio** from the model dropdown and describe what you want ("a cute puppy"). A local Ollama model rewrites it into a detailed prompt + negative prompt, ComfyUI renders it, and the reply shows the exact prompts used. Change the rewrite model (default `llama3.2:3b`; `llama3.2:1b` is faster but adds subjects and ignores the rules) under Admin Panel → Functions → Image Studio → Valves.
+
+**Note**: Z-Image Turbo runs at CFG 1.0, where ComfyUI ignores the negative prompt; it takes effect with models that use CFG > 1.
+
+**Linux + NVIDIA**: `make pull-image z-image-turbo && make start-image-gpu` (ComfyUI runs in a container).
+
+**Command line** (any model, any parameter):
+```bash
+make gen PROMPT="a red fox in snow"                       # Saved to ./outputs/
+make gen PROMPT="a lighthouse" STEPS=6 SIZE=1024x768 SEED=42
+python3 scripts/image-gen.py gen z-image-turbo "a cat" --set shift=3.5 --set sampler=res_multistep
+```
+
+**Models are config, not code**: each model is a JSON file in `image-models/` (files to download + default parameters) that points at a ComfyUI workflow template in `image-models/workflows/`, where `"$name"` inputs are filled at generation time. To add a model, add a JSON file (and a workflow if it's a new model family), then `make pull-image <name>` and `make image-webui <name>` to make it the Web UI default.
+
 ## Available Models
 
 - **llama3.2:1b** - Fastest, CPU-friendly (default)

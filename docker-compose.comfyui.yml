@@ -1,0 +1,28 @@
+# Image generation override for docker-compose.yml
+# Usage: make start-image   (macOS: run `make comfyui` on the host first)
+#
+# Connects Open WebUI to ComfyUI for the "Image Studio" model (openwebui/image_studio.py,
+# installed by `make start-image`). By default ComfyUI runs natively on the host (Docker
+# on macOS has no GPU access); docker-compose.comfyui-gpu.yml adds a containerized
+# ComfyUI for Linux + NVIDIA instead.
+# Model-specific settings come from comfyui/webui.env (written by `make image-webui`).
+
+services:
+  # Open WebUI requests with built-in tool specs reached ~8k tokens, over Ollama's 4096 default
+  ollama:
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=16384
+
+  ollama-webui:
+    environment:
+      # Image Studio is its own model, so the per-chat image toggle stays off
+      - ENABLE_IMAGE_GENERATION=false
+      - IMAGE_GENERATION_ENGINE=comfyui
+      - COMFYUI_BASE_URL=http://host.docker.internal:8188
+      # Re-read image settings from env on every start so switching models works
+      - ENABLE_PERSISTENT_CONFIG=false
+    env_file:
+      - path: comfyui/webui.env
+        required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
